@@ -1,1 +1,1 @@
-## Start writing script here for creating synthetic data for OMOP cohort.
+## Placeholder for script to create synthetic data for OMOP cohort.
