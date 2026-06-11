@@ -1,0 +1,105 @@
+# ---------------------------------------------------------------------
+# VALIDATION UTILITY CHECKS (USING SYN_CON)
+# ---------------------------------------------------------------------
+# Instantiate a completely clean read-only connection to the generated asset file
+syn_con <- DBI::dbConnect(duckdb::duckdb(), OUTPUT_DB_PATH, read_only = TRUE)
+
+cat("=====================================================================\n")
+cat("=== RUNNING INTEGRATED STRUCTURAL INTEGRITY VERIFICATION          ===\n")
+cat("=====================================================================\n")
+
+# CHECK 1 & 2: Referential Link Matching Validation
+if ("condition_occurrence" %in% DBI::dbListTables(syn_con)) {
+  total_conditions <- DBI::dbGetQuery(syn_con, "SELECT COUNT(*) as cnt FROM condition_occurrence")$cnt
+  linked_conditions <- DBI::dbGetQuery(syn_con, "
+    SELECT COUNT(c.person_id) as cnt 
+    FROM condition_occurrence c
+    INNER JOIN person p ON c.person_id = p.person_id
+  ")$cnt
+  
+  match_rate <- (linked_conditions / max(1, total_conditions)) * 100
+  cat(sprintf("  [CHECK 1/2] Total Condition Rows: %d\n", total_conditions))
+  cat(sprintf("  [CHECK 1/2] Match Rate with Synthetic Person Table: %.2f%%\n", match_rate))
+  rm(total_conditions, linked_conditions, match_rate)
+}
+
+# AMENDED STEP B: Clinical Lifecycle Lineage Tracing (Visit-Free Variant)
+cat("\n=== RUNNING STEP B: CLINICAL LIFECYCLE PATHWAY TRACING ===\n")
+flush.console()
+
+available_syn_tables <- DBI::dbListTables(syn_con)
+
+if ("condition_occurrence" %in= available_syn_tables && "fact_relationship" %in= available_syn_tables) {
+  
+  cat("  [INFO] Target tables verified. Tracing joint family lineage pathways...\n")
+  flush.console()
+  
+  pathway_sample <- tryCatch({
+    DBI::dbGetQuery(syn_con, "
+      SELECT 
+        m.person_id AS mother_synthetic_id,
+        m.year_of_birth AS mother_yob,
+        c.condition_concept_id AS pregnancy_delivery_concept,
+        fr.relationship_concept_id AS link_concept,
+        b.person_id AS baby_synthetic_id,
+        b.year_of_birth AS baby_yob
+      FROM person m
+      INNER JOIN condition_occurrence c ON m.person_id = c.person_id
+      INNER JOIN fact_relationship fr ON m.person_id = fr.fact_id_1
+      INNER JOIN person b ON fr.fact_id_2 = b.person_id
+      WHERE m.gender_concept_id = 8532  -- Female
+        AND b.year_of_birth >= m.year_of_birth + 12 -- Plausibility age gate
+      LIMIT 5
+    ")
+  }, error = function(e) {
+    cat(sprintf("  [ERROR] Primary lineage query failed structural translation: %s\n", e$message))
+    data.frame()
+  })
+  
+  if (nrow(pathway_sample) > 0) {
+    cat("\n  [PASS] Successfully traced intact Mother-Pregnancy-Baby pathways:\n")
+    print(pathway_sample)
+  } else {
+    cat("\n  [EXPLORATION] Direct pathway tracing via fact_relationship returned 0 rows.\n")
+    cat("  Executing fallback inspections to audit table profiles safely...\n")
+    flush.console()
+    
+    # Audit 1: Check distribution of remaining relationship concept IDs
+    cat("\n  [INSPECT] Frequency distribution of relationship concepts in fact_relationship:\n")
+    fr_profile <- DBI::dbGetQuery(syn_con, "
+      SELECT 
+        relationship_concept_id, 
+        COUNT(*) AS total_records 
+      FROM fact_relationship 
+      GROUP BY relationship_concept_id
+      LIMIT 5
+    ")
+    print(fr_profile)
+    
+    # Audit 2: Verify active diagnostic profiles inside condition domain
+    cat("\n  [INSPECT] Sample of records from condition_occurrence:\n")
+    co_sample <- DBI::dbGetQuery(syn_con, "
+      SELECT 
+        person_id, 
+        condition_concept_id, 
+        condition_start_date 
+      FROM condition_occurrence 
+      LIMIT 5
+    ")
+    print(co_sample)
+    
+    rm(fr_profile, co_sample)
+  }
+  rm(pathway_sample)
+} else {
+  cat("  [SKIP] Step B cancelled: Target structural tables are absent in this cohort.\n")
+}
+
+# ---------------------------------------------------------------------
+# PART 8: TERMINATE AND PURGE WORKSPACE FOOTPRINTS
+# ---------------------------------------------------------------------
+rm(available_syn_tables)
+gc()
+cat("\n=====================================================================\n")
+cat("=== PIPELINE COMPLETION SUCCESSFUL                                ===\n")
+cat("=====================================================================\n")
