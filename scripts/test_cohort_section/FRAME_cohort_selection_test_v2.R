@@ -313,7 +313,7 @@ str(preg_link_has_hyp_df)
 preg_link_has_drugs_df <- preg_18_link_df %>% 
   inner_join(rf_has_drugs_df,by=join_by(preg_condition_occurrence_id==fact_id_1)) %>%
   inner_join(has_drugs_df %>% select(drug_exposure_id ,drug_concept_id,drug_exposure_start_date ),by=join_by(fact_id_2 ==drug_exposure_id )) %>%
-  mutate(drugs_in_preg = if_else(  drug_exposure_start_date >=  preg_condition_end_date &   drug_exposure_start_date <=  preg_condition_end_date,TRUE,FALSE )) %>%
+  mutate(drugs_in_preg = if_else(  (drug_exposure_start_date >=  preg_condition_start_date )  &   (drug_exposure_start_date <=  preg_condition_end_date),TRUE,FALSE )) %>%
   mutate(drugs_before_preg = if_else(  drug_exposure_start_date <=  preg_condition_start_date ,TRUE,FALSE ))
 
 # eyeball
@@ -330,7 +330,7 @@ preg_18_reporting_df <- preg_18_link_df %>%
   mutate(l_n_drugs_in_preg = if_else(preg_condition_occurrence_id %in%  preg_link_has_drugs_df$preg_condition_occurrence_id[preg_link_has_drugs_df$drugs_in_preg == T], TRUE, FALSE ) ) %>%
   mutate(l_n_drugs_before_preg = if_else(preg_condition_occurrence_id %in%  preg_link_has_drugs_df$preg_condition_occurrence_id[preg_link_has_drugs_df$drugs_before_preg == T], TRUE, FALSE ) ) %>%
   left_join(preg_link_has_drugs_df %>% group_by(preg_condition_occurrence_id) %>% summarise(l_n_drugs_initiated_date=min(drug_exposure_start_date)),by=join_by(preg_condition_occurrence_id==preg_condition_occurrence_id)) %>% 
-  mutate(frame_cohort = if_else((hyp_recorded==TRUE &  l_n_drugs_in_preg==TRUE ),TRUE,FALSE   ))
+  mutate(frame_cohort = if_else(( (hyp_recorded==TRUE) &  (l_n_drugs_in_preg==TRUE) ),TRUE,FALSE   ))
 
 
 # clear memory
