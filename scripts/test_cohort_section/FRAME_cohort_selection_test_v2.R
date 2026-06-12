@@ -57,18 +57,21 @@ out_folder = "B:/BRC_Elixir/Durbaba- MIREDA/test OMOP/FRAME OMOP/version 1/"
 
 #Set file names#
 
+script_version = 2
+
+
 #main data file
 out_file = "FRAME mothers data for cohort section v1.csv"
 
 # additional data files
 
-out_summary_file =  "FRAME mothers r script v1 summary for cohort section.csv"
+out_summary_file =  paste0( "FRAME mothers r script v",as.character(script_version)," summary for cohort section.csv")
 
-out_codebook_file =  "FRAME mothers r script v1 codebook for cohort section.csv"
+out_codebook_file =  paste0( "FRAME mothers r script v",as.character(script_version)," codebook for cohort section.csv")
 
-out_hyp_file =  "FRAME mothers hypertensive disorder vocab use v1.csv"
+out_hyp_file =  paste0( "FRAME mothers hypertensive disorder vocab use v",as.character(script_version),".csv")
 
-out_drug_file =  "FRAME mothers labetalol or nifedipine vocab use v1.csv"
+out_drug_file =  paste0( "FRAME mothers labetalol or nifedipine vocab use v",as.character(script_version),".csv")
 
 # set write_additional to TRUE of write the additional files, Set to FALSE if not required
 write_additional = TRUE
@@ -133,17 +136,6 @@ for( file_name in vocab_needed_files){
 
 
 
-# look at res_df <- res_df %>% bind_rows(data.frame(item='number of pregnancies aged 18+',item_value = nrow(preg_18_link_df)))
-
-vocab_df_list[["CONCEPT"]] %>% filter(concept_id %in% c( vocab_df_list[["CONCEPT_ANCESTOR"]] %>% filter(ancestor_concept_id == hypertensive_disorder_concept_id ) %>%
-                                                                              select(descendant_concept_id) %>% unlist(use.names = FALSE))) %>% select (concept_id,concept_name)
-
-
-# look at hypertensive_disorder domains
-#vocab_df_list[["CONCEPT"]] %>% filter( hypertensive_disorder_concept_id,concept_id %in% c( vocab_df_list[["CONCEPT_ANCESTOR"]] %>% filter(ancestor_concept_id == hypertensive_disorder_concept_id ) %>%
-#                                                          select(descendant_concept_id) %>% unlist(use.names = FALSE))) %>% select (domain_id) %>% distinct()
-
-
 
 
 # hypertensive_disorder_descendants
@@ -155,13 +147,6 @@ hypertensive_descendants_df <-  vocab_df_list[["CONCEPT"]] %>% filter( concept_i
 
 
 
-# look at drug_list
-vocab_df_list[["CONCEPT"]] %>% filter(concept_id %in% c( drug_list,vocab_df_list[["CONCEPT_ANCESTOR"]] %>% filter(ancestor_concept_id %in%  drug_list )  %>%
-                                                           select(descendant_concept_id) %>% unlist(use.names = FALSE))) %>% select (concept_id,concept_name)
-# look at drug_list domains
-#vocab_df_list[["CONCEPT"]] %>% filter(concept_id %in% c( drug_list,vocab_df_list[["CONCEPT_ANCESTOR"]] %>% filter(ancestor_concept_id %in%  drug_list )  %>%
-#                                                           select(descendant_concept_id) %>% unlist(use.names = FALSE))) %>% select (domain_id) %>% distinct()
-
 # drug_list_descendants
 drug_list_descendants_list <- c( drug_list , vocab_df_list[["CONCEPT_ANCESTOR"]] %>% filter(ancestor_concept_id %in%  drug_list ) %>%
                                    select(descendant_concept_id) %>% unlist(use.names = FALSE))
@@ -171,7 +156,6 @@ drug_list_descendants_df <-  vocab_df_list[["CONCEPT"]] %>% filter( concept_id %
 
 
 # delete the main vocab data from memeroy 
-
 rm(vocab_df_list)
 
 
