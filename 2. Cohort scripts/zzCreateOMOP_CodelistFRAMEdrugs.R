@@ -1,3 +1,25 @@
+#' ---
+#' title: "Extract codelist for FRAME drugs"
+#' author: "Mike Seaborne"
+#' date: "2026-07-16"
+#' description: "This script uses a duckdb with Athena for OMOP vocabularies loaded
+#'              and creates a codelist of all valid and standard single-ingredient
+#'              oral products of nifedipine and labetalol from RxNorm Extenstion.
+#'              It also includes the Ingredient code from RxNorm for 'nifedipine'
+#'              and 'labetalol'.
+#' inputs: 
+#'   - Duckdb of OMOP vocabularies from Athena (conn = 'con')
+#' outputs: 
+#'   - codelist added to duckdb and a csv codelist
+#' limitations: Designed for 16GB RAM limit. Uses lazy tables where possible.
+#' ---
+
+# --- Clean Up Residual Objects to Start Fresh ---
+rm(list = ls())
+gc()
+
+# ... Your R code starts here ...
+
 # Uses a duckdb with the Athena vocabulary already loaded into it.
 # 1. Establish DuckDB Connection
 db_path <- file.path(<ADD path of duckdb directory here>)
