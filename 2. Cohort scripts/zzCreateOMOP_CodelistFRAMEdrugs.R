@@ -1,5 +1,6 @@
+# Uses a duckdb with the Athena vocabulary already loaded into it.
 # 1. Establish DuckDB Connection
-db_path <- file.path(proj_dir, "mireda_drugs.duckdb")
+db_path <- file.path(<ADD path of duckdb directory here>)
 
 con <- dbConnect(duckdb(), dbdir = db_path, read_only = FALSE)
 ################################################################################
