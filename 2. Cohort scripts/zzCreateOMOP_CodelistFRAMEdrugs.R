@@ -124,7 +124,7 @@ omop$concept %>%
   )
 
 # Append the new table reference to your local omop list ---
-omop$frame_drugs <- omop$frame_drugs
+omop$frame_drugs <- tbl(con, "frame_drugs")
 
 # Save the table directly to CSV via DuckDB's native execution ---
 dbExecute(con, "COPY frame_drugs TO 'frame_drugs.csv' (HEADER, DELIMITER ',');")
