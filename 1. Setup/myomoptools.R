@@ -362,7 +362,7 @@ get_synonyms <- function(cdm = "cdm", concept_ids) {
 # ------------------------------------------------------------------------------------------
 writeLines(
   con = file.path(pkg_path, "R/get_drugs_list.R"),
-  text = '
+  text = r"(
 #\' Retrieve RxNorm Extension (dm+d) drug concepts from an OMOP CDM
 #\' 
 #\' @param cdm A CDM reference object exposing cdm$concept, cdm$concept_ancestor and
@@ -473,17 +473,125 @@ select(ingredient_concept_id = concept_id, ingredient_name = concept_name)
       select(dfg_concept_id = descendant_concept_id)
 
     rxnorm_bridge <- rxnorm_descendants |>
+      inner_join(
+        cdm$concept_relationship |>
+          filter(relationship_id == "Has dose form group",
+                  is.na(invalid_reason)) |>
+          inner_join(dfg_descendants,
+                     by = c("concept_id_2" = "dfg_concept_id")) |>
+          select(concept_id_1),
+        by = c("rxnorm_bridge_id" = "concept_id_1")
+      ) |>
+      distinct()
+  } else {
+    rxnorm_bridge <- rxnorm_descendants |> distinct()
+  }
 
-'
-  )
+  # 4. RxNorm Extension (dm+d) descendants of bridge concepts
+  rxnorm_ext_candidates <- cdm$concept_ancestor |>
+    inner_join(
+      rxnorm_bridge,
+      by = c("ancestor_concept_id" = "rxnorm_bridge_id")
+    ) |>
+    inner_join(
+      cdm$concept |>
+        filter(vocabulary_id == "RxNorm Extension", is.na(invalid_reason)) |>
+        select(concept_id, concept_name, concept_class_id, vocabulary_id),
+      by = c("descendant_concept_id" = "concept_id")
+    ) |>
+    select(concept_id = descendant_concept_id, concept_name, concept_class_id, vocabulary_id,
+           ingredient_name) |>
+    distinct()
+
+  # 5. Ingredient combination filter
+    rxnorm_std_ingredients <- cdm$concept |>
+      filter(
+        vocabulary_id    == "RxNorm",
+        concept_class_id == "Ingredient",
+        standard_concept == "S"
+      ) |>
+      select(ancestor_concept_id = concept_id)
+
+  if (combination = "any") {
+    result <- rxnorm_ext_candidates
+  } else if (combination == "single_only") {
+      mono_ids <- cdm$concept_ancestor |>
+        semi_join(
+          rxnorm_ext_candidates,
+          by = c("descendant_concept_id" = "concept_id")
+        ) |>
+        inner_join(rxnorm_std_ingredients, by = "ancestor_concept_id") |>
+        group_by(descendant_concept_id) |>
+        summarise(n_ingredients = n(), .groups = "drop") |>
+        filter(n_ingredients == 1L) |>
+        select(concept_id = descendant_concept_id)
+
+      result <- rxnorm_ext_candidates |>
+        semi_join(mono_ids. by = "concept_id")
+    } else {                                              # specified only
+      # Total ingredient count per candidate concept
+      n_total_ingredients <- cdm$concept_ancestor |>
+        semi_join(
+          rxnorm_ext_candidates,
+          by = c("descendant_concept_id" = "concept_id")
+        ) |>
+        inner_join(rxnorm_std_ingredients, by = "ancestor_concept_id") |>
+        group_by(descendant_concept_id) |>
+        summarise(n_total = n(), .groups = "drop")
+
+      # Count of those that are from the specified ingredients list
+      n_specified_ingredients <- cdm$concept_ancestor |>
+        semi_join(
+          rxnorm_ext_candidates,
+          by = c("descendat_concept_id" = "concept_id")
+        ) |>
+        inner_join(
+          target_ingredients |>
+            select(ancestor_concept_id = ingredient_concept_id),
+          by = "ancestor_concept_id"
+        ) |>
+        group_by(descendant_concept_id) |>
+        summarise(n_specified = n(), .groups = "drop")
+
+      # Keep only concepts where every ingredient is a specified one (n_total == n_specified 
+      # means no outside ingredients present)
+      specified_only_ids <- n_total_ingredients |>
+        inner_join(n_specified_ingredients, by = "descendant_concept_id") |>
+        filter(n_total == n_specified) |>
+        select(concept_id = descendant_concept_id)
+
+      result <- rxnorm_ext_candidates |>
+        semi_join(specified_only_ids, by = "concept_id")
+    }
+
+    # De-duplicate and return lazy table
+    result |>
+      distinct(concept_id, concept_name, concept_class_id, vocabulary_id) |>
+      arrange(concept_class_id, concept_name)
+}
+  )"
+)
 
 ############################################################################################
 ## Write the Description file with dependencies
 writeLines(
-  con = file.path(pkg_path, ""),
+  con = file.path(pkg_path, "DESCRIPTION"),
   text = '
-#\' 
-
+Package: myomoptools
+Title: Utility Function Tools for Querying OMOP CDM Using Duckdb and dplyr
+Version: 0.0.0.9000
+Authros@R:
+    person("Mike", "Seaborne", , "m.j.seaborne@swansea.ac.uk",
+    role = c("aut", "cre"))
+Description: Contains a collection of tools which utilise dplyr to query duckdb databases containing OMP CDM metadata and vocabulary from Athena. The functions are used to simplify common queries.
+Imports: DBI,
+         tidyverse,
+         dbplyr,
+         duckdb
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
 '
   )
 ############################################################################################
