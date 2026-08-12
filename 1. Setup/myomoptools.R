@@ -6,7 +6,7 @@
 pkg_path = file.path(
   "P:",
   Sys.getenv("USERNAME"),
-  "Projects/duckdbtools"
+  "Projects/myomoptools"
   )
 
 if (!dir.exists(pkg_path)) {
