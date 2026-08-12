@@ -122,8 +122,7 @@ q |>
     concept_code,
     min_levels_of_separation,
     max_levels_of_separation
-  ) |>
-  arrange(min_levels_of_separation, concept_name)
+  )
 }
   '
 )
@@ -179,8 +178,7 @@ q |>
     vocabulary_id,
     concept_code,
     min_levels_of_separation
-  ) |>
-  arrange(min_levels_of_separation, concept_name)
+  )
 }
   '
 )
@@ -313,8 +311,7 @@ get_source_codes <- function(cdm = "cdm",
       source_concept_name = concept_name,
       source_vocab        = vocabulary_id,
       source_code         = concept_code
-    ) |>
-    arrange(source_vocabm source_code)
+    )
 }
   '
 )
@@ -351,8 +348,7 @@ get_synonyms <- function(cdm = "cdm", concept_ids) {
       cdm$concept |> select(concept_id, concept_name, vocabulary_id),
     by = "concept_id"
     ) |>
-    select(concept_id, concept_name, concept_synonym_name, language_concept_id) |>
-    arrange(concept_id, concept_synonym_name)
+    select(concept_id, concept_name, concept_synonym_name, language_concept_id)
 }
   '
 )
@@ -566,8 +562,7 @@ select(ingredient_concept_id = concept_id, ingredient_name = concept_name)
 
     # De-duplicate and return lazy table
     result |>
-      distinct(concept_id, concept_name, concept_class_id, vocabulary_id) |>
-      arrange(concept_class_id, concept_name)
+      distinct(concept_id, concept_name, concept_class_id, vocabulary_id)
 }
   )"
 )
