@@ -122,8 +122,7 @@ q |>
     min_levels_of_separation,
     max_levels_of_separation
   ) |>
-  arrange(min_levels_of_separation, concept_name) |>
-  collect()
+  arrange(min_levels_of_separation, concept_name)
 }
   '
 )
