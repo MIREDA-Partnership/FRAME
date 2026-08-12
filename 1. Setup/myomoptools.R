@@ -29,7 +29,8 @@ writeLines(
 #\' Look for concepts within the OMOP CDM using keyword searches within the concept_name
 #\' fileds of vocabulary
 #\' 
-#\' @return a dataframe of standard concepts and their concept_ids, etc
+#\' @return A lazy table of standard concepts and their concept_ids, etc. Call 
+#\'   collect() when ready to materialise
 #\' 
 #\' @param cdm A CDM reference object exposing cdm$concept, cdm$concept_ancestor and
 #\'   cdm$concept_relationship as lazy tables. Where cdm contains a list of 
@@ -61,8 +62,7 @@ if (!is.null(vocab_id)) q <- q |> filter(domain_id == vocab_id)
 
 q |>
   select(concept_id, concept_name, domain_id, vocabulary_id, concept_class_id, concept_code,
-          standard_concept, valid_end_date) |>
-  collect()
+          standard_concept, valid_end_date)
 }
   '
 )
@@ -78,7 +78,8 @@ writeLines(
 #\' Specify a concept code within OMOP CDM to find ALL its descendants - including children, 
 #\' grandchildren and so on
 #\' 
-#\' @return a dataframe of descendant concepts and their details
+#\' @return A lazy table of descendant concepts and their details. Call collect() when ready 
+#\'   to materialise
 #\' 
 #\' @param cdm A CDM reference object exposing cdm$concept, cdm$concept_ancestor and
 #\'   cdm$concept_relationship as lazy tables. Where cdm contains a list of 
@@ -137,8 +138,9 @@ writeLines(
 #\' 
 #\' Specifiy a concept code within OMOP CDM to find its ancestor concepts
 #\' 
-#\' @return a dataframe of ancestor concepts and their details
-#\' 
+#\' @return A lazy table of ancestor concepts and their details. Call collect() when ready to 
+#\'   materialise
+#\'
 #\' @param cdm A CDM reference object exposing cdm$concept, cdm$concept_ancestor and
 #\'   cdm$concept_relationship as lazy tables. Where cdm contains a list of 
 #\'   tbl(duckdb_conn, table_name) 
@@ -178,8 +180,7 @@ q |>
     concept_code,
     min_levels_of_separation
   ) |>
-  arrange(min_levels_of_separation, concept_name) |>
-  collect()
+  arrange(min_levels_of_separation, concept_name)
 }
   '
 )
@@ -197,8 +198,9 @@ writeLines(
 #\' Takes either a keyword or a source code and maps it to the OMOP standard concept_id 
 #\' equivalent
 #\' 
-#\' @return Concept details of mapped terms, ids, etc
-#\' 
+#\' @return A lazy table of concept mapped terms, ids, etc. Call collect() when ready to 
+#\'   materialise
+#\'
 #\' @param cdm A CDM reference object exposing cdm$concept, cdm$concept_ancestor and
 #\'   cdm$concept_relationship as lazy tables. Where cdm contains a list of 
 #\'   tbl(duckdb_conn, table_name)
@@ -256,8 +258,7 @@ map_source_to_standard <- function(cdm = "cdm",
       standard_domain,
       standard_vocab,
       standard_code
-    ) |>
-    collect()
+    )
 }
   '
 )
@@ -273,8 +274,9 @@ writeLines(
 #\' Takes a standard OMOP concept_id and returns a list of source codes to which it maps. 
 #\' Allows you to give a specific source code if you do no wish to retrieve all
 #\' 
-#\' @return Tables of source codes and terms which map to the specified code
-#\' 
+#\' @return A lazy table of source codes and terms which map to the specified code. 
+#\'   Call collect() when ready to materialise
+#\'
 #\' @param cdm A CDM reference object exposing cdm$concept, cdm$concept_ancestor and
 #\'   cdm$concept_relationship as lazy tables. Where cdm contains a list of 
 #\'   tbl(duckdb_conn, table_name)
@@ -312,8 +314,7 @@ get_source_codes <- function(cdm = "cdm",
       source_vocab        = vocabulary_id,
       source_code         = concept_code
     ) |>
-    arrange(source_vocabm source_code) |>
-    collect()
+    arrange(source_vocabm source_code)
 }
   '
 )
@@ -329,7 +330,8 @@ writeLines(
 #\' Supply any concept_id and return a table with all the synonyms that match it 
 #\' along with their language_concept_id, and concept_synonym_name
 #\' 
-#\' @return Table of all related synonyms to the concept_id specified
+#\' @return A lazy table of all related synonyms to the concept_id specified. Call collect() 
+#\'   when ready to materialise
 #\' 
 #\' @param cdm A CDM reference object exposing cdm$concept, cdm$concept_ancestor and
 #\'   cdm$concept_relationship as lazy tables. Where cdm contains a list of 
@@ -350,8 +352,7 @@ get_synonyms <- function(cdm = "cdm", concept_ids) {
     by = "concept_id"
     ) |>
     select(concept_id, concept_name, concept_synonym_name, language_concept_id) |>
-    arrange(concept_id, concept_synonym_name) |>
-    collect()
+    arrange(concept_id, concept_synonym_name)
 }
   '
 )
