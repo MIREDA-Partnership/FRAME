@@ -7,6 +7,10 @@
 
 req_pkgs <- c("DBI", "duckdb", "myomoptools", "tidyverse", "dbplyr", "dtplyr",
              "data.table", "bit64")
+
+invisible(suppressPackageStartupMessages(
+  lapply(req_pkgs, library, character.only = FALSE, logical.return = TRUE)))
+rm(req_pkgs)
 ################################################################################
 # 2. Identify valid and standard codes for single-ingredient, oral nifedipine
 #    and labetalol
