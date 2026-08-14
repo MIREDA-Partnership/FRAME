@@ -2,10 +2,20 @@
 ##                       FRAME cohort selection                               ##
 ################################################################################
 ## Run setup
-source(file.path(getwd(), "1_FRAME_setup.R"))
+# source(file.path(getwd(), "1_FRAME_setup.R"))
 ################################################################################
 ## Run script to get drug_concept_id for all nifedipine/labetalol oral products
-source(file.path(getwd(), "2_FRAME_drug_identification.R"))
+# source(file.path(getwd(), "2_FRAME_drug_identification.R"))
+################################################################################
+## Run script to create the FRAME duckdb
+# source(file.path(getwd(), "3_FRAME_duckdb_creation.R"))
+################################################################################
+req_pkgs <- c("DBI", "duckdb", "myomoptools", "tidyverse", "dbplyr", "dtplyr",
+             "data.table", "bit64", "writexl")
+
+invisible(suppressPackageStartupMessages(
+  lapply(req_pkgs, library, character.only = FALSE, logical.return = TRUE)))
+rm(req_pkgs)
 ################################################################################
 # connect to frame duckdb
 con <- dbConnect(duckdb::duckdb(), dbdir = target_db_path,
