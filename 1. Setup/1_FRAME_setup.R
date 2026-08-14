@@ -1,15 +1,6 @@
 ################################################################################
 ## Check scripts on GitHub for installing duckdbtools if not already created  ##
 ################################################################################
-## Check if duckdbtools package has already been created
-if (
-  !dir.exists(file.path(getwd(), "Packages/duckdbtools"))
-) {
-  source(file.path(getwd(), "Packages/2_create_duckdbtools_pkg.R"))
-}
-
-library(duckdbtools)
-
 ## Check if myomoptools has been created
 if (
   !dir.exists(file.path(getwd(), "Packages/myomoptools"))
