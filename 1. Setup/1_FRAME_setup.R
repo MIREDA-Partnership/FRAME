@@ -9,15 +9,7 @@ if (
 }
 
 library(myomoptools)
-
-## Load required packages
-req_packages <- c("roxygen2", "tidyverse", "DBI", "data.table", "dbplyr", "dtplyr",
-                  "duckdb")
-
-invisible(suppressPackagesStartupMessages(
-  lapply(req_packages, library, character.only = TRUE, logical.return = TRUE)))
-
-rm(req_packages)
+library(duckdb)
 ################################################################################
 db_path <- file.path(dirname(getwd()), "omop_cdm.duckdb")
 
