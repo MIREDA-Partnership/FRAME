@@ -5,6 +5,8 @@
 ## 1. First run the setup file - gets mireda omop datasets
 # source(file.path(getwd(), "1_FRAME_setup.R"))
 
+req_pkgs <- c("DBI", "duckdb", "myomoptools", "tidyverse", "dbplyr", "dtplyr",
+             "data.table", "bit64")
 ################################################################################
 # 2. Identify valid and standard codes for single-ingredient, oral nifedipine
 #    and labetalol
