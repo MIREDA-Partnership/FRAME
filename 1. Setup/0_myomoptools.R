@@ -9,6 +9,8 @@ pkg_path = file.path(
   "Projects/myomoptools"
   )
 
+library(roxygen2)
+
 if (!dir.exists(pkg_path)) {
   dir.create(pkg_path, recursive = TRUE, showWarnings = FALSE)
   }
