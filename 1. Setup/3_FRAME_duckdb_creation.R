@@ -1,11 +1,17 @@
 ################################################################################
 ##                       FRAME cohort selection                               ##
 ################################################################################
+req_pkgs <- c("DBI", "duckdb", "myomoptools", "tidyverse", "dbplyr", "dtplyr",
+             "data.table", "bit64", "writexl")
+
+invisible(suppressPackageStartupMessages(
+  lapply(req_pkgs, library, character.only = FALSE, logical.return = TRUE)))
+rm(req_pkgs)
 ##  If not already run, run setup
-source(file.path(getwd(), "1_FRAME_setup.R"))
+# source(file.path(getwd(), "1_FRAME_setup.R"))
 ################################################################################
 ## If not run already, run drugidentification script
-source(file.path(getwd(), "2_FRAME_drug_identification.R"))
+# source(file.path(getwd(), "2_FRAME_drug_identification.R"))
 ################################################################################
 # Find mothers with nifedipine / labetalol prescribed in pregnancy
 frame_drugs_events <- cdm$drug_exposure %>% 
