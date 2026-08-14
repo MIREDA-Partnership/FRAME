@@ -8,8 +8,10 @@ if (
   source(file.path(getwd(), "Packages/3_create_myomoptools_pkg.R"))
 }
 
-library(myomoptools)
-library(duckdb)
+req_packages <- c("DBI", "duckdb", "", "myomoptools")
+invisible(suppressPackageStartupMessages(
+  lapply(req_packages, library, character.only = TRUE, logical.return = FALSE)))
+rm(req_packages)
 ################################################################################
 db_path <- file.path(dirname(getwd()), "omop_cdm.duckdb")
 
