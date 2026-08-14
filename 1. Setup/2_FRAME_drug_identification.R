@@ -3,7 +3,7 @@
 ################################################################################
 
 ## 1. First run the setup file - gets mireda omop datasets
-source(file.path(getwd(), "1_FRAME_setup.R"))
+# source(file.path(getwd(), "1_FRAME_setup.R"))
 
 ################################################################################
 # 2. Identify valid and standard codes for single-ingredient, oral nifedipine
