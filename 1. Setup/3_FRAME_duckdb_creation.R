@@ -341,28 +341,6 @@ if ("episode_event" %in% names(cdm) && "episode" %in% names(cdm)) {
   write_to_frm(filtered_ep_events, "episode_event")
 }
 
-## Location stuff not used here as there is an issue with how they have been 
-## written but if you entity_ids are person_ids then below should run
-
-
-#     # location will need changing if you have other locations too, these are 
-#     # just for historical address data for individuals
-# if ("location_history" %in% names(cdm)) {
-#   filtered_loc_hx <- cdm$location_history %>% 
-#     filter(domain_id == "PERSON") %>% 
-#     semi_join(cohortids, by = c("entity_id" = "person_id")) %>% 
-#   write_to_frm(filtered_loc_hx, "location_history")
-# }
-# 
-# if ("location_history" %in% names(cdm) && "location" %in% names(cdm)) {
-#   filtered_loc_hx <- cdm$location_history %>% 
-#     filter(domain_id == "PERSON") %>% 
-#     semi_join(cohortids, by = c("entity_id" = "person_id"))
-#   filtered_loc <- cdm$location %>% 
-#     semi_join(filtered_loc_hx %>% select(location_id), by = "location_id")
-#   write_to_frm(filtered_loc_hx, "location_history")
-# }
-
 # 5. Previously created frame datasets
 if (exists("frame_drugs")) {
   write_to_frm(frame_drugs, "frame_drugs")
