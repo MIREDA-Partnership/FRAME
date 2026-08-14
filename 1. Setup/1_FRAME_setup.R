@@ -8,7 +8,7 @@ if (
   source(file.path(getwd(), "Packages/3_create_myomoptools_pkg.R"))
 }
 
-req_packages <- c("DBI", "duckdb", "", "myomoptools")
+req_packages <- c("DBI", "duckdb", "myomoptools")
 invisible(suppressPackageStartupMessages(
   lapply(req_packages, library, character.only = TRUE, logical.return = FALSE)))
 rm(req_packages)
