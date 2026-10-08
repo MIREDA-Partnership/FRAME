@@ -34,11 +34,38 @@ invisible(suppressPackageStartupMessages(
 rm(req_packages)
 
 # read in the functions using scource
-source(file.path(getwd(), "1. Setup/eLIXIR BiSL/0_source_myomoptools.R"))
+source(file.path(getwd(), "1. Setup/0_source_myomoptools.R"))
 
+
+# set the OMOP folder and file for the FRAME project
+
+frame_db_folder <- "B:/BRC_Elixir/Durbaba- MIREDA/test OMOP/FRAME OMOP/cdm"
+frame_db_file <- paste0("frame_",base_db_file)
+
+db_path <- file.path(frame_db_folder , frame_db_file)
+
+
+
+#eyeball
+db_path
+
+target_db_file <-  paste0("FRAME_study_",base_db_file)
+
+
+target_db_path <- file.path(frame_db_folder, target_db_file)
+
+
+propensity_file = paste0(reporting_site_text,"_","propensity_data_", last_omop_etl_date,".csv")
+
+matched_file = paste0(reporting_site_text,"_","matched_details_",last_omop_etl_date ,".xlsx")
+
+
+
+# connect if not connected
 
 if (!exists("frm", inherits = FALSE)) {
-  db_path <- file.path(getwd(), "frm_cdm.duckdb")
+  #db_path <- file.path(getwd(), "frm_cdm.duckdb")
+  db_path <- target_db_path
   
   frm <- dbConnect(duckdb(), 
                    dbdir = db_path, 
@@ -75,6 +102,9 @@ proptab <- frame$base_stats %>%
            TRUE ~ ethnicity
          )) %>% 
   collect()
+
+
+#proptab_in <- copy(proptab)
 
 #' 
 #' ## Fit logistic regression (propensity score model)
@@ -191,7 +221,7 @@ final_data <- matched_data %>%
 #' ## Export data
 #' 
 ## -----------------------------------------------------------------------------
-write.csv(final_data, "Propensity_data.csv", row.names = FALSE)
+write.csv(final_data, file.path(frame_db_folder,  propensity_file), row.names = FALSE)
 
 dbWriteTable(
   conn = frm,
@@ -316,7 +346,7 @@ summary_table <- bind_rows(
 
 writexl::write_xlsx(
   x = summary_table,
-  path = file.path(getwd(), "Matched Details.xlsx")
+  path = file.path(frame_db_folder, matched_file)
 )
 
 
@@ -326,8 +356,8 @@ writexl::write_xlsx(
 ## -----------------------------------------------------------------------------
 rm(proptab, model, intervention, control, available_controls,
    final_matches_list, current_case, match_candidates, best_match, i, fmt_n,
-   get_cat_row, make_header, matched_data, matched_long, row_number,
-   rows_ethnicity, rows_pregnancy, rows_diabetes, row_gest_age_num,
+get_cat_row, make_header, matched_data, matched_long, row_number,
+rows_ethnicity, rows_pregnancy, rows_diabetes, row_gest_age_num,
    row_gest_age_cat, rows_deprivation, summary_table, final_data)
 gc()
 

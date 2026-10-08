@@ -31,10 +31,10 @@ rm(req_pkgs)
 
 
 # read in the functions using scource
-source(file.path(getwd(), "1. Setup/eLIXIR BiSL/0_source_myomoptools.R"))
+source(file.path(getwd(), "1. Setup/0_source_myomoptools.R"))
 
 
-last_omop_etl_date <- "2026-09-10"
+#last_omop_etl_date <- "2026-09-10"
 
 # set the base OMOP folder and file
 base_db_folder <- paste0("B:/BRC_Elixir/Durbaba- MIREDA/duckdb/omop cdm/",last_omop_etl_date)
@@ -63,9 +63,9 @@ target_db_file <-  paste0("FRAME_study_",base_db_file)
 target_db_path <- file.path(frame_db_folder, target_db_file)
 
 
-exclusion_file = paste0("elixir_bisl_exclusions_", last_omop_etl_date,".xlsx")
+exclusion_file = paste0(reporting_site_text,"_","exclusions_", last_omop_etl_date,".xlsx")
 
-unmatched_file = paste0("elixir_bisl_unmatched_details_",last_omop_etl_date ,".xlsx")
+unmatched_file = paste0(reporting_site_text,"_","elixir_bisl_unmatched_details_",last_omop_etl_date ,".xlsx")
 
 
 #' #Define data type
@@ -80,12 +80,58 @@ unmatched_file = paste0("elixir_bisl_unmatched_details_",last_omop_etl_date ,".x
 rxtype <- 2L
 
 
+# added to prossess English IMD scores into quitials 
+#using_english_imd_score = TRUE
+
+# imd score 2019 threshold between 2 and 3
+#imd_2_3_threshold <- 21.555
+
+#English IMD 2019 deciles and  scores 
+#decile 	max_score	min_score
+#1	92.735	43.859
+#2	43.856	33.254
+#3	33.251	26.575
+#4	26.574	21.555
+#5	21.555	17.648
+#6	17.647	14.238
+#7	14.237	11.299
+#8	11.299	8.616
+#9	8.615	5.909
+#10	5.908	0.541
+
+#English IMD 2019 quintiles and  scores 
+#quintile 	max_score	min_score
+#1	92.735	33.254
+#2	33.251	21.555
+#3	21.555	14.238
+#4	14.237	8.616
+#5	8.615	0.541
+
+
+
+
+
+
+
 #' 
 #' #Find mothers with nifedipine/labetalol prescriptions
 #' 
 #' The list of concept codes, *frame_drugs*, for the study drugs were created by the *2_FRAME_drug_identification.R* file. This is used to identify mothers with events matching these concept codes.
 #' 
 #-----------------------------------------------------------------------------
+
+# start_check_table_summary_df <- tibble(table_name = names(cdm)) %>%
+#   rowwise() %>%
+#   mutate(
+#     start_n_rows = cdm[[table_name]] %>%
+#       summarise(n = n()) %>%
+#       collect() %>%
+#       pull(n),
+#     start_n_cols = ncol(cdm[[table_name]])
+#   ) %>%
+#   ungroup()
+#
+
 
 frame_drugs_events <- cdm$drug_exposure %>% 
   inner_join(cdm$frame_drugs %>% 
@@ -96,6 +142,12 @@ frame_drugs_events <- cdm$drug_exposure %>%
 cdm[["frame_drugs_events"]] <- tbl(con, "frame_drugs_events")
 
 
+colnames(cdm$frame_drugs_events)
+
+cdm$frame_drugs_events %>%
+  count() %>%
+  collect()
+
 #' 
 #' #Identify conditions, observations, measurements
 #' 
@@ -104,13 +156,22 @@ cdm[["frame_drugs_events"]] <- tbl(con, "frame_drugs_events")
 #-----------------------------------------------------------------------------
 #Conditions concepts
 
+
+
+
 pregconcept <- find_concepts(
   cdm,
-  keyword = "^Pregnancy$", 
+  keyword = "^pregnancy$", 
   domain = "Condition",
   vocab_id = "SNOMED",
   standard_only = TRUE) %>% 
   distinct(concept_id)
+
+colnames(pregconcept)
+
+pregconcept %>%
+  count() %>%
+  collect()
 
 # Diabetes in pregnancy        
 # 4058243 = Diabetes mellitus during pregnancy, childbirth and the puerperium
@@ -241,8 +302,11 @@ gc()
 
 # Index of multiple deprivation observation codes by country
 imd           <-  cdm$concept %>% #  Wales     Scotland  England
-  filter(concept_id %in% c(35812898L, 35812898L, 35812898L)) %>% 
+  filter(concept_id %in% c(35812898L, 35812899L, 35812882L)) %>% 
   select(concept_id)
+
+
+
 
 ambulatory_bp <- cdm$concept %>% filter(
   concept_id %in% c(1450301L, 44789316L, 44789315L, 1076803L)) %>% 
@@ -1123,8 +1187,8 @@ base_table <- cdm$rx_in_preg %>%
   left_join(cdm$fact_relationship %>% 
               filter(domain_concept_id_2 == 1147333L & # condition_occurrence
                        domain_concept_id_1 == 1147314L & # person
-                       #                              Infant,  Child
-                       relationship_concept_id %in% c(4305451L, 4285883L)) %>%
+                       #                              Infant,  Child ,Relevant condition of
+                       relationship_concept_id %in% c(4305451L, 4285883L,46233684L)) %>%
               distinct(condition_occurrence_id = fact_id_2, fact_id_1) %>% 
               group_by(condition_occurrence_id) %>% 
               tally() %>% 
@@ -1254,6 +1318,20 @@ base_table <- cdm$rx_in_preg %>%
   left_join(cdm$observation %>%
               semi_join(imd,
                         by = c("observation_concept_id" = "concept_id")) %>% 
+              #added for English IDM scores
+              mutate(
+                value_as_number = case_when(
+                  (observation_concept_id == 35812882L) & ( value_as_number >= 33.254 ) ~ 1,
+                  (observation_concept_id == 35812882L) & ( value_as_number >= 21.555 ) ~ 2,
+                  (observation_concept_id == 35812882L) & ( value_as_number >= 14.238 )~ 3,
+                  (observation_concept_id == 35812882L) & ( value_as_number >= 8.616  ) ~ 4,
+                  (observation_concept_id ==35812882L ) & (value_as_number >= 0.541 ) ~ 5,
+                  TRUE ~ value_as_number
+                )
+              ) %>%
+            
+              
+              
               distinct(person_id, observation_date, value_as_number)) %>%
   group_by(person_id, condition_occurrence_id) %>% 
   mutate(date_dist = abs(observation_date - condition_start_date),
@@ -1369,16 +1447,51 @@ fathers <- cdm$fact_relationship %>%
   }
 
 # get record of mother-baby relationships
+# mumsbabies <- cdm$base_stats %>%
+#   distinct(person_id, condition_occurrence_id) %>% 
+#   left_join(cdm$fact_relationship %>% 
+#               filter(domain_concept_id_2 == 1147333L & # condition_occurrence
+#                        domain_concept_id_1 == 1147314L & # person
+#                        # Child   Infant
+#                        relationship_concept_id %in% c(4285883L, 4305451L)) %>% 
+#               select(baby_id = fact_id_1, condition_occurrence_id = fact_id_2),
+#             by = "condition_occurrence_id") %>% 
+#   distinct()
+
+colnames(cdm$base_stats)
+
+cdm$base_stats %>%
+   count() %>%
+   collect()
+
+cdm$base_stats %>% show_query()
+
+DBI::dbGetQuery(con, "
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_name = 'base_stats'
+")
+
+# Number of columns
+ncol(cdm$base_stats)
+
+# Number of rows
+cdm$base_stats %>% tally() %>% collect()
+
+
+# get record of mother-baby relationships
 mumsbabies <- cdm$base_stats %>%
   distinct(person_id, condition_occurrence_id) %>% 
   left_join(cdm$fact_relationship %>% 
               filter(domain_concept_id_2 == 1147333L & # condition_occurrence
                        domain_concept_id_1 == 1147314L & # person
-                       # Child   Infant
-                       relationship_concept_id %in% c(4285883L, 4305451L)) %>% 
+                       # Child   Infant Relevant condition of
+                       relationship_concept_id %in% c(4285883L, 4305451L,46233684L)) %>% 
               select(baby_id = fact_id_1, condition_occurrence_id = fact_id_2),
             by = "condition_occurrence_id") %>% 
   distinct()
+
+check_mumsbabies <- mumsbabies %>% collect() %>% as.data.frame()
 
 # Get singular list of all person_ids for extracting data from other tables.
 cohortids <- mumsbabies %>% 
@@ -1558,22 +1671,39 @@ frame <- lapply(duck_tables, function(table_name) {
 })
 names(frame) <- duck_tables
 
+# End_check_table_summary_df <- tibble(table_name = names(cdm)) %>%
+#   rowwise() %>%
+#   mutate(
+#     end_n_rows = cdm[[table_name]] %>%
+#       summarise(n = n()) %>%
+#       collect() %>%
+#       pull(n),
+#     end_n_cols = ncol(cdm[[table_name]])
+#   ) %>%
+#   ungroup()
+#
+
+
 dbRemoveTable(con, "base_stats")
 dbRemoveTable(con, "frame_drugs")
 dbRemoveTable(con, "frame_drugs_events")
 
+
+
 dbDisconnect(con, shutdown = TRUE)
 
 rm(cdm, cohortids, con, duck_tables, fathers, filtered_ep_events,
-   filtered_episodes, filtered_lazy, filtered_pregs, filtrd_fr, frame_fact_rel,
-   mumsbabies, person_tables, src_con, tbl, vocab_tables, write_to_frm)
+  filtered_episodes, filtered_lazy, filtered_pregs, filtrd_fr, frame_fact_rel,
+  mumsbabies, person_tables, src_con, tbl, vocab_tables, write_to_frm)
 gc()
 # 
 # dbDisconnect(frm, shutdown = TRUE)
 # rm(frame, frm)
 # gc()
 
+#compare_table_stats <-  full_join(omop_table_stats,frame_table_stats, by="table_name")
 
-
-
+#start_check
+#end_check
+#names(cdm)
 

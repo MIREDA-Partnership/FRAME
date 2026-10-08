@@ -38,7 +38,7 @@ find_concepts <- function(cdm = "cdm",
 
 if (standard_only)      q <- q |> filter(standard_concept == "S")
 if (!is.null(domain))   q <- q |> filter(domain_id == domain)
-if (!is.null(vocab_id)) q <- q |> filter(domain_id == vocab_id)
+if (!is.null(vocab_id)) q <- q |> filter(vocabulary_id == vocab_id)
 
 q |>
   select(concept_id, concept_name, domain_id, vocabulary_id, concept_class_id, concept_code,

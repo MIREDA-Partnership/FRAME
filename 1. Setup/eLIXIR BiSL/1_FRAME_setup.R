@@ -18,11 +18,11 @@ rm(req_packages)
 
 
 # read in the functions using scource
-source(file.path(getwd(), "1. Setup/eLIXIR BiSL/0_source_myomoptools.R"))
+source(file.path(getwd(), "1. Setup/0_source_myomoptools.R"))
 ################################################################################
 
 # last date of the python omop etl
-last_omop_etl_date <- "2026-09-10"
+#last_omop_etl_date <- "2026-09-10"
 
 # set the base OMOP folder and file
 base_db_folder <- paste0("B:/BRC_Elixir/Durbaba- MIREDA/duckdb/omop cdm/",last_omop_etl_date)

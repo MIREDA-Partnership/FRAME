@@ -17,12 +17,12 @@ rm(req_pkgs)
 
 
 # read in the functions using scource
-source(file.path(getwd(), "1. Setup/eLIXIR BiSL/0_source_myomoptools.R"))
+source(file.path(getwd(), "1. Setup/0_source_myomoptools.R"))
 
 
 frame_db_folder <- "B:/BRC_Elixir/Durbaba- MIREDA/test OMOP/FRAME OMOP/cdm"
 
-last_omop_etl_date <- "2026-09-10"
+#last_omop_etl_date <- "2026-09-10"
 
 
 
