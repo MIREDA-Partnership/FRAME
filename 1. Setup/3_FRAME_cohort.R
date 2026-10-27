@@ -218,8 +218,8 @@ gc()
 Observations
 
 Index of multiple deprivation observation codes by country
-imd           <-  cdm$concept %>%  Wales     Scotland  England
-  filter(concept_id %in% c(35812898L, 35812898L, 35812898L)) %>%
+imd           <-  cdm$concept %>%  # Wales Scotland  England
+  filter(concept_id %in% c(35812898L, 35812899L, 35812882L)) %>%
   select(concept_id)
 
 ambulatory_bp <- cdm$concept %>% filter(
@@ -1437,7 +1437,7 @@ person_tables <- c("condition_occurrence", "device_exposure", "drug_exposure",
                     "episode", "measurement", "observation",
                     "person", "procedure_occurrence", "specimen",
                     "observation_period", "visit_occurrence", "death",
-                    "drug_era", "dose_era", "episode")
+                    "drug_era", "dose_era", "care_site")
 
 for (tbl in intersect(person_tables, names(cdm))) {
   filtered_lazy <- cdm[[tbl]] %>%
