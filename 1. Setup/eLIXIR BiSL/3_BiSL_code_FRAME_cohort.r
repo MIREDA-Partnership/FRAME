@@ -1402,7 +1402,7 @@ base_table <- cdm$rx_in_preg %>%
     cvd = if_else(is.na(cvd), 0L, cvd),
     inc_gpandas_periods = if_else(
       between(frst_preg_drug_strt_dt,
-              as.Date("2018-06-08"), as.Date("2025-01-17")), 1L, 0L
+              as.Date("2021-06-08"), as.Date("2025-01-17")), 1L, 0L
     )) %>% 
   select(-c(cncpt_nm, cncpt_id, cncpt_dom, cncpt_dt)) %>% 
   distinct() %>% 
