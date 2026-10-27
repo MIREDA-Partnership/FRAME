@@ -230,7 +230,7 @@ map_source_to_standard <- function(cdm = "cdm",
   }
 
   if (!is.null(source_code)) {
-    src <- src |> filter(concept_code == source_code
+    src <- src |> filter(concept_code == source_code)
   }
 
   src |>
@@ -510,7 +510,7 @@ select(ingredient_concept_id = concept_id, ingredient_name = concept_name)
       ) |>
       select(ancestor_concept_id = concept_id)
 
-  if (combination = "any") {
+  if (combination == "any") {
     result <- rxnorm_ext_candidates
   } else if (combination == "single_only") {
       mono_ids <- cdm$concept_ancestor |>
@@ -525,7 +525,7 @@ select(ingredient_concept_id = concept_id, ingredient_name = concept_name)
         select(concept_id = descendant_concept_id)
 
       result <- rxnorm_ext_candidates |>
-        semi_join(mono_ids. by = "concept_id")
+        semi_join(mono_ids, by = "concept_id")
     } else {                                              # specified only
       # Total ingredient count per candidate concept
       n_total_ingredients <- cdm$concept_ancestor |>
