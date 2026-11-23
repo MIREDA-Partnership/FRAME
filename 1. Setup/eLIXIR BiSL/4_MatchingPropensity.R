@@ -34,7 +34,7 @@ invisible(suppressPackageStartupMessages(
 rm(req_packages)
 
 # read in the functions using scource
-source(file.path(getwd(), "1. Setup/0_source_myomoptools.R"))
+source(file.path(getwd(),  paste0( bisl_r_sub_folder,"0_source_myomoptools.R")))
 
 
 # set the OMOP folder and file for the FRAME project

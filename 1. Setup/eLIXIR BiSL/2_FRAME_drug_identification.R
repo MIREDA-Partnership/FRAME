@@ -17,7 +17,7 @@ rm(req_pkgs)
 
 
 # read in the functions using scource
-source(file.path(getwd(), "1. Setup/0_source_myomoptools.R"))
+source(file.path(getwd(),  paste0( bisl_r_sub_folder,"0_source_myomoptools.R")))
 
 
 frame_db_folder <- "B:/BRC_Elixir/Durbaba- MIREDA/test OMOP/FRAME OMOP/cdm"

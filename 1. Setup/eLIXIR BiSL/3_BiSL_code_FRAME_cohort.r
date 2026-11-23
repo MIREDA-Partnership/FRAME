@@ -23,7 +23,7 @@
 #-----------------------------------------------------------------------------
 
 req_pkgs <- c("DBI", "duckdb",  "tidyverse", "dbplyr", "dtplyr",
-              "data.table", "bit64","writexl")
+              "data.table", "bit64","writexl","lubridate")
 
 invisible(suppressPackageStartupMessages(
   lapply(req_pkgs, library, character.only = TRUE, logical.return = FALSE)))
@@ -31,7 +31,7 @@ rm(req_pkgs)
 
 
 # read in the functions using scource
-source(file.path(getwd(), "1. Setup/0_source_myomoptools.R"))
+source(file.path(getwd(),  paste0( bisl_r_sub_folder,"0_source_myomoptools.R")))
 
 
 #last_omop_etl_date <- "2026-09-10"
@@ -78,6 +78,10 @@ unmatched_file = paste0(reporting_site_text,"_","elixir_bisl_unmatched_details_"
 #-----------------------------------------------------------------------------
 
 rxtype <- 2L
+
+# Added for eLIXIR BiSL date rounding
+week_date_window_days <- 6
+final_week_date_window_days <- 9
 
 
 # added to prossess English IMD scores into quitials 
@@ -837,6 +841,13 @@ if (rxtype == 1L) {
 if (rxtype != 1L) {
   # Per drug anchors and imputation grouped by ingredient.
   processed_cohort <- cdm$temp1 %>%
+    # add column with extended_condition_end_date to work with date rounding
+    mutate(
+      extended_condition_end_date = case_when(
+        day(condition_end_date) %in% c(1, 8, 15) ~ condition_end_date + days(week_date_window_days),
+        TRUE ~ condition_end_date + days(final_week_date_window_days )
+      )
+    )  %>%
     group_by(person_id, condition_occurrence_id, ingredient_name) %>% 
     summarise(
       # Prescription windows
@@ -846,10 +857,10 @@ if (rxtype != 1L) {
         drug_exposure_start_date, as.Date(NA)), na.rm = TRUE),
       frst_preg_rx   = min(if_else(
         drug_exposure_start_date >= condition_start_date &
-          drug_exposure_start_date < condition_end_date,
+          drug_exposure_start_date <= extended_condition_end_date,
         drug_exposure_start_date, as.Date(NA)), na.rm = TRUE),
       frst_post_rx   = min(if_else(
-        drug_exposure_start_date >= condition_end_date &
+        drug_exposure_start_date >= extended_condition_end_date &
           drug_exposure_start_date <= postnat,
         drug_exposure_start_date, as.Date(NA)), na.rm = TRUE),
       
@@ -858,10 +869,10 @@ if (rxtype != 1L) {
         cncpt_nm == "hypertension" & cncpt_dt < gest20w,
         cncpt_dt, as.Date(NA)), na.rm = TRUE),
       htn_dx_gest = min(if_else(
-        cncpt_nm == "hypertension" & cncpt_dt >= gest20w & cncpt_dt <= condition_end_date,
+        cncpt_nm == "hypertension" & cncpt_dt >= gest20w & cncpt_dt <= extended_condition_end_date,
         cncpt_dt, as.Date(NA)), na.rm = TRUE),
       htn_events_dt = min(if_else(
-        cncpt_nm %in% htn_events_list & cncpt_dt <= condition_end_date,
+        cncpt_nm %in% htn_events_list & cncpt_dt <= extended_condition_end_date,
         cncpt_dt, as.Date(NA)), na.rm = TRUE),
       
       precon_tx_dt  = min(if_else(
@@ -870,7 +881,7 @@ if (rxtype != 1L) {
       
       preec_dx_dt = min(if_else(
         cncpt_nm == "preeclampsia" & 
-          cncpt_dt <= condition_end_date, cncpt_dt, as.Date(NA)), na.rm = TRUE),
+          cncpt_dt <= extended_condition_end_date, cncpt_dt, as.Date(NA)), na.rm = TRUE),
       preec_tx_dt = min(if_else(
         cncpt_nm %in% tx_list &
           cncpt_dt < condition_start_date, cncpt_dt, as.Date(NA)), na.rm = TRUE),
@@ -881,10 +892,10 @@ if (rxtype != 1L) {
       
       raynaud_dt = min(if_else(
         cncpt_nm == "raynauds" & cncpt_dt >= condition_start_date &
-          cncpt_dt <=  condition_end_date,
+          cncpt_dt <=  extended_condition_end_date,
         cncpt_dt, as.Date(NA)), na.rm = TRUE),
       tocolytic_dt = min(if_else(
-        cncpt_nm == "tocolytic" & cncpt_dt >= gest20w & cncpt_dt <= condition_end_date,
+        cncpt_nm == "tocolytic" & cncpt_dt >= gest20w & cncpt_dt <= extended_condition_end_date,
         cncpt_dt, as.Date(NA)), na.rm = TRUE),
       
       gest20w_date  = min(gest20w, na.rm = TRUE),
